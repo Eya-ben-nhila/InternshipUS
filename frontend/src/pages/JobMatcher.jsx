@@ -1,5 +1,18 @@
 import { useState } from 'react';
 
+// Helper: extract keywords from text (simple split, remove stopwords, dedupe)
+const stopwords = new Set(['the','and','a','an','to','of','in','on','for','with','by','at','is','are','as','be','from','that','this','it','our','we','you','your','us','will','must','have','has','was','were','or','but','if','then','so','not','can','should','may','do','does','did','using','used','into','out','about','over','under','more','less','than','such','these','those','their','which','who','what','when','where','how','why','all','any','each','other','some','most','many','much','very','just','also','too','both','either','neither','own','same','new','now','after','before','again','once']);
+function extractKeywords(text) {
+  if (!text) return [];
+  return Array.from(new Set(
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w && !stopwords.has(w))
+  ));
+}
+
 // Simulate fetching user profile (in real app, use context or props)
 const getUserProfile = () => {
   return JSON.parse(localStorage.getItem('userProfile')) || {
@@ -56,14 +69,16 @@ export default function JobMatcher() {
   const [showEnhance, setShowEnhance] = useState(false);
   const [enhanceData, setEnhanceData] = useState(null);
 
-  // Simulate matching logic
+  // Improved matching logic: percentage of dream job keywords found in job description
   const getMatchScore = (job, dreamJob) => {
     if (!dreamJob) return 0;
-    // Simple keyword overlap for demo
-    const dreamWords = dreamJob.description.toLowerCase().split(/\W+/);
-    const jobWords = job.description.toLowerCase().split(/\W+/);
-    const overlap = dreamWords.filter(w => jobWords.includes(w)).length;
-    return Math.min(100, 60 + overlap * 5);
+    const dreamKeywords = extractKeywords(dreamJob.description);
+    const jobKeywords = extractKeywords(job.description);
+    if (dreamKeywords.length === 0) return 0;
+    const found = dreamKeywords.filter(k => jobKeywords.includes(k));
+    const percent = Math.round((found.length / dreamKeywords.length) * 100);
+    // Clamp between 0 and 100, and add a minimum threshold if needed
+    return Math.max(0, Math.min(100, percent));
   };
 
   // Find best resume for a job (by keyword overlap)
@@ -148,8 +163,12 @@ export default function JobMatcher() {
                 <div style={{ marginBottom: 8 }}>
                   <b>Cons:</b> {cons.join(', ')}
                 </div>
-                {bestResume && (
+                {bestResume ? (
                   <button className="js-apply-button" onClick={() => handleEnhance(bestResume, job)}>
+                    Enhance Resume for this Job
+                  </button>
+                ) : (
+                  <button className="js-apply-button" disabled title="No resume available">
                     Enhance Resume for this Job
                   </button>
                 )}

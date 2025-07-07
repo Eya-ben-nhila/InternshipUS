@@ -1,5 +1,20 @@
 import { useState, useEffect } from "react";
 
+function downloadResume(resume) {
+  const content = `Resume: ${resume.name}\nStatus: ${resume.status}\nScore: ${resume.score}/100\nLast Updated: ${resume.lastUpdated}\nKeywords: ${resume.keywords.join(', ')}\n`;
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${resume.name.replace(/\s+/g, '_')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
 export default function Profile() {
   // Load/save profile from localStorage
   const loadProfile = () => {
@@ -218,6 +233,30 @@ export default function Profile() {
     setShowScanModal(true);
   };
 
+  // Delete Resume
+  const deleteResume = (id) => {
+    const updated = {
+      ...userProfile,
+      resumes: userProfile.resumes.filter(r => r.id !== id)
+    };
+    setUserProfile(updated);
+    localStorage.setItem('userProfile', JSON.stringify(updated));
+  };
+
+  // Job Preferences Modal
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [prefsForm, setPrefsForm] = useState({ ...userProfile.meta });
+  const openPrefs = () => {
+    setPrefsForm({ ...userProfile.meta });
+    setShowPrefs(true);
+  };
+  const savePrefs = () => {
+    const updated = { ...userProfile, meta: { ...prefsForm } };
+    setUserProfile(updated);
+    localStorage.setItem('userProfile', JSON.stringify(updated));
+    setShowPrefs(false);
+  };
+
   return (
     <div className="js-profile">
       <div className="js-profile-container">
@@ -305,9 +344,16 @@ export default function Profile() {
                     </button>
                     <button 
                       className="js-action-button secondary"
-                      onClick={() => alert('Download not implemented in demo')}
+                      onClick={() => downloadResume(resume)}
                     >
                       Download
+                    </button>
+                    <button 
+                      className="js-action-button secondary"
+                      style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                      onClick={() => deleteResume(resume.id)}
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -389,53 +435,54 @@ export default function Profile() {
             </div>
 
             {/* Job Preferences Section */}
-            <div>
+            <div style={{ marginBottom: '3rem' }}>
               <h3 className="js-section-title">Job Preferences</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <div style={{ 
-                  background: '#f8fafc', 
-                  padding: '1rem', 
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
-                }}>
-                  <div style={{ fontWeight: '600', color: '#1a202c', marginBottom: '0.5rem' }}>Desired Role</div>
-                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>Senior Software Engineer</div>
-                </div>
-                <div style={{ 
-                  background: '#f8fafc', 
-                  padding: '1rem', 
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
-                }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: 12 }}>
+                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                   <div style={{ fontWeight: '600', color: '#1a202c', marginBottom: '0.5rem' }}>Location</div>
-                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>San Francisco, CA</div>
+                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>{userProfile.meta.location}</div>
                 </div>
-                <div style={{ 
-                  background: '#f8fafc', 
-                  padding: '1rem', 
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
-                }}>
-                  <div style={{ fontWeight: '600', color: '#1a202c', marginBottom: '0.5rem' }}>Salary Range</div>
-                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>$120,000 - $150,000</div>
-                </div>
-                <div style={{ 
-                  background: '#f8fafc', 
-                  padding: '1rem', 
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
-                }}>
+                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                   <div style={{ fontWeight: '600', color: '#1a202c', marginBottom: '0.5rem' }}>Work Type</div>
-                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>Hybrid</div>
+                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>{userProfile.meta.workType}</div>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: '600', color: '#1a202c', marginBottom: '0.5rem' }}>Salary Range</div>
+                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>${userProfile.meta.salaryMin} - ${userProfile.meta.salaryMax}</div>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: '600', color: '#1a202c', marginBottom: '0.5rem' }}>Employer Type</div>
+                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>{userProfile.meta.employerType}</div>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: '600', color: '#1a202c', marginBottom: '0.5rem' }}>Sector</div>
+                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>{userProfile.meta.sector}</div>
                 </div>
               </div>
-              <button 
-                className="js-action-button secondary"
-                style={{ marginTop: '1rem' }}
-                onClick={() => console.log('Edit preferences')}
-              >
+              <button className="js-action-button secondary" onClick={openPrefs} style={{ marginTop: 8 }}>
                 Edit Preferences
               </button>
+              {showPrefs && (
+                <div style={{ background: '#fff', border: '2px solid #2563eb', borderRadius: 12, padding: 24, marginTop: 16, boxShadow: '0 4px 16px #2563eb22', maxWidth: 400 }}>
+                  <h4 style={{ color: '#2563eb', marginBottom: 12 }}>Edit Job Preferences</h4>
+                  <input value={prefsForm.location} onChange={e => setPrefsForm({ ...prefsForm, location: e.target.value })} placeholder="Location" style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  <select value={prefsForm.workType} onChange={e => setPrefsForm({ ...prefsForm, workType: e.target.value })} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                    <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="In-person">In-person</option>
+                  </select>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    <input type="number" value={prefsForm.salaryMin} onChange={e => setPrefsForm({ ...prefsForm, salaryMin: e.target.value })} placeholder="Min Salary" style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                    <input type="number" value={prefsForm.salaryMax} onChange={e => setPrefsForm({ ...prefsForm, salaryMax: e.target.value })} placeholder="Max Salary" style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  </div>
+                  <input value={prefsForm.employerType} onChange={e => setPrefsForm({ ...prefsForm, employerType: e.target.value })} placeholder="Employer Type" style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  <input value={prefsForm.sector} onChange={e => setPrefsForm({ ...prefsForm, sector: e.target.value })} placeholder="Sector" style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="js-action-button primary" onClick={savePrefs}>Save</button>
+                    <button className="js-action-button secondary" onClick={() => setShowPrefs(false)}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* DREAM JOB SECTION */}
