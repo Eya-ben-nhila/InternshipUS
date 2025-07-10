@@ -26,6 +26,37 @@ const getUserProfile = () => {
   };
 };
 
+// Curated list of common work-related keywords (expand as needed)
+const WORK_KEYWORDS = [
+  'react', 'node.js', 'python', 'aws', 'typescript', 'agile', 'analytics', 'sql', 'machine learning', 'product', 'user research', 'statistics', 'project management', 'leadership', 'javascript', 'java', 'c++', 'docker', 'kubernetes', 'cloud', 'data', 'api', 'design', 'testing', 'scrum', 'jira', 'git', 'html', 'css', 'devops', 'linux'
+];
+
+// Extract up to 20 work-related keywords from job description
+function extractWorkKeywords(description, max = 20) {
+  if (!description) return [];
+  // Split description into words, remove punctuation, lowercase
+  const words = description
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\+\#\.\-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  // Only include words that are in the WORK_KEYWORDS list
+  const found = WORK_KEYWORDS.filter(keyword =>
+    words.includes(keyword.toLowerCase())
+  );
+  // Remove duplicates and limit to max
+  const unique = Array.from(new Set(found)).slice(0, max);
+  console.log('Extracted work keywords:', unique); // Debugging
+  return unique;
+}
+
+// Extract up to 20 keywords from job description only
+function extractTopKeywords(text, max = 20) {
+  if (!text) return [];
+  const words = extractKeywords(text);
+  return words.slice(0, max);
+}
+
 export default function JobMatcher() {
   // Simulate user profile state
   const [userProfile, setUserProfile] = useState(getUserProfile());
@@ -69,15 +100,14 @@ export default function JobMatcher() {
   const [showEnhance, setShowEnhance] = useState(false);
   const [enhanceData, setEnhanceData] = useState(null);
 
-  // Improved matching logic: percentage of dream job keywords found in job description
-  const getMatchScore = (job, dreamJob) => {
-    if (!dreamJob) return 0;
-    const dreamKeywords = extractKeywords(dreamJob.description);
-    const jobKeywords = extractKeywords(job.description);
-    if (dreamKeywords.length === 0) return 0;
-    const found = dreamKeywords.filter(k => jobKeywords.includes(k));
-    const percent = Math.round((found.length / dreamKeywords.length) * 100);
-    // Clamp between 0 and 100, and add a minimum threshold if needed
+  // Improved matching logic: percentage of job tags found in resume keywords
+  const getMatchScore = (job, resume) => {
+    if (!resume) return 0;
+    const resumeKeywords = resume.keywords || [];
+    const jobKeywords = job.tags || [];
+    if (jobKeywords.length === 0) return 0;
+    const found = jobKeywords.filter(k => resumeKeywords.includes(k));
+    const percent = Math.round((found.length / jobKeywords.length) * 100);
     return Math.max(0, Math.min(100, percent));
   };
 
@@ -134,22 +164,25 @@ export default function JobMatcher() {
         ) : null}
         <div className="js-jobs-grid">
           {jobs.map(job => {
-            const matchScore = activeDreamJob ? getMatchScore(job, activeDreamJob) : 0;
-            const bestResume = getBestResume(job);
-            const { pros, cons } = bestResume ? getProsCons(bestResume, job) : { pros: [], cons: [] };
+            // Extract up to 20 work-related keywords from job description
+            const jobKeywords = extractWorkKeywords(job.description, 20);
+            const bestResume = getBestResume({ ...job, tags: jobKeywords });
+            const matchScore = bestResume ? getMatchScore({ ...job, tags: jobKeywords }, bestResume) : 0;
+            const { pros, cons } = bestResume ? getProsCons(bestResume, { ...job, tags: jobKeywords }) : { pros: [], cons: [] };
             return (
               <div key={job.id} className="js-job-card">
                 <div className="js-job-title">{job.title}</div>
                 <div className="js-job-company">{job.company}</div>
                 <div className="js-job-location">{job.location} • {job.type}</div>
                 <div className="js-job-tags">
-                  {job.tags.map((tag, index) => (
+                  <b>Required Keywords:</b> {jobKeywords.map((tag, index) => (
                     <span key={index} className="js-job-tag">{tag}</span>
                   ))}
                 </div>
                 <div className="js-job-match-score">
                   <span className="js-match-percentage">{matchScore}% Match</span>
                 </div>
+                {/* Remove any display or extraction of keywords from job.description */}
                 <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1rem' }}>{job.description}</p>
                 <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '1rem' }}>💰 {job.salary}</div>
                 {bestResume && (

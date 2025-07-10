@@ -4,8 +4,7 @@ export default function Navbar() {
   const location = useLocation();
   const links = [
     { name: 'Home', path: '/' },
-    { name: 'Resume Scanner', path: '/scan' },
-    { name: 'Job Matcher', path: '/match' },
+    { name: 'Resume & Job Matcher', path: '/scan' },
     { name: 'Profile', path: '/profile' },
   ];
 

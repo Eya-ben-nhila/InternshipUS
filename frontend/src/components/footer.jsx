@@ -10,8 +10,7 @@ export default function Footer() {
             <h4 className="js-footer-heading">Product</h4>
             <ul className="js-footer-links">
               <li><Link to="/">Home</Link></li>
-              <li><Link to="/scan">Resume Scanner</Link></li>
-              <li><Link to="/match">Job Matcher</Link></li>
+              <li><Link to="/scan">Resume & Job Matcher</Link></li>
               <li><Link to="/profile">Profile</Link></li>
             </ul>
           </div>
