@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Search</title>
+    <!-- Semantic UI CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Semantic UI JS -->
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    <!-- Lodash (for array operations) -->
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .ui.container {
+            max-width: 1200px !important;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .job-card {
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui container">
+        <h1 class="ui header">Job Search</h1>
+        <div class="ui form">
+            <div class="fields">
+                <div class="eight wide field">
+                    <label>Keywords (e.g., Python, Developer)</label>
+                    <input type="text" id="keywords" placeholder="Enter job title or keywords">
+                </div>
+                <div class="five wide field">
+                    <label>ZIP Code</label>
+                    <input type="text" id="zipCode" placeholder="Enter ZIP code">
+                </div>
+                <div class="three wide field" style="display: flex; align-items: flex-end;">
+                    <button class="ui primary button" id="submitBtn">Search</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="results">
+            <!-- Results will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Initialize accordion
+        $(".ui.accordion").accordion();
+
+        // Creating arrays to organize and store search results
+        let jobTitles = [];
+        let jobLocations = [];
+        let jobTypes = [];
+        let jobCompanies = [];
+        let jobDescriptions = [];
+        let newsTitles = [];
+        let newsDescriptions = [];
+        let newsSources = [];
+
+        $("#submitBtn").click(function (e) {
+            e.preventDefault();
+            runSearch();
+        });
+
+        async function runSearch() {
+            // Clear previous results
+            $("#results").empty().append('<div class="ui active centered inline loader"></div>');
+            
+            try {
+                // Get city from ZIP code
+                const city = await getCity();
+                
+                // Get jobs from our Flask backend
+                const jobs = await getJobPostings(city);
+                
+                // Process and display jobs
+                for (const job of jobs) {
+                    await renderJobInfo(job);
+                }
+                
+                // Re-initialize accordions for any new elements
+                $(".ui.accordion").accordion('refresh');
+                
+            } catch (error) {
+                console.error("Error:", error);
+                $("#results").html('<div class="ui negative message">Error fetching jobs. Please try again later.</div>');
+            }
+        }
+
+        async function renderJobInfo(job) {
+            const $searchResults = $("#results");
+            
+            // Create job card
+            const jobCard = $(`
+                <div class="job-card">
+                    <h2 class="ui header">${job.title}</h2>
+                    <div class="meta">
+                        <span class="company">${job.company}</span> • 
+                        <span class="location">${job.location}</span> • 
+                        <span class="type">${job.type || 'Full-time'}</span>
+                    </div>
+                    <div class="ui styled fluid accordion">
+                        <div class="title">
+                            <i class="dropdown icon"></i>
+                            Job Description
+                        </div>
+                        <div class="content">
+                            <p>${job.description || 'No description available.'}</p>
+                        </div>
+                    </div>
+                    <div class="ui divider"></div>
+                    <a href="${job.url || '#'}" target="_blank" class="ui primary button">
+                        Apply Now
+                    </a>
+                </div>
+            `);
+            
+            $searchResults.append(jobCard);
+            
+            // Initialize accordion for this job card
+            jobCard.find('.accordion').accordion();
+        }
+
+        async function getJobPostings(city) {
+            const keywords = $("#keywords").val();
+            const response = await fetch(`/api/jobs?query=${encodeURIComponent(keywords)}&location=${encodeURIComponent(city)}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch jobs');
+            }
+            const data = await response.json();
+            return data.jobs || [];
+        }
+
+        async function getCity() {
+            const zipCode = $("#zipCode").val();
+            if (!zipCode) return '';
+            
+            try {
+                const response = await fetch(`/api/location?zip=${encodeURIComponent(zipCode)}`);
+                if (!response.ok) {
+                    console.warn('Failed to get city from ZIP, using ZIP directly');
+                    return zipCode;
+                }
+                const data = await response.json();
+                return data.city || zipCode;
+            } catch (error) {
+                console.warn('Error getting city, using ZIP directly:', error);
+                return zipCode;
+            }
+        }
+    </script>
+</body>
+</html>
