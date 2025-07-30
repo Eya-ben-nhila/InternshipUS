@@ -1,0 +1,38 @@
+{
+  "name": "linkedin-job-scraper",
+  "version": "1.0.0",
+  "description": "LinkedIn job scraper using Puppeteer with anti-detection measures",
+  "main": "linkedin_scraper_node.js",
+  "scripts": {
+    "start": "node linkedin_scraper_node.js",
+    "dev": "nodemon linkedin_scraper_node.js",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "puppeteer": "^21.5.2",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "puppeteer-extra-plugin-adblocker": "^2.13.6",
+    "user-agents": "^1.1.164",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "csv-writer": "^1.6.0",
+    "xlsx": "^0.18.5",
+    "fs-extra": "^11.2.0",
+    "winston": "^3.11.0",
+    "dotenv": "^16.3.1",
+    "delay": "^6.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "linkedin",
+    "scraping",
+    "jobs",
+    "puppeteer",
+    "automation"
+  ],
+  "author": "LinkedIn Job Scraper",
+  "license": "MIT"
+}
