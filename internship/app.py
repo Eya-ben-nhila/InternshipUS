@@ -385,7 +385,7 @@ def search_jobs():
         print(f"Error in search_jobs: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify(SAMPLE_JOBS)
+        return jsonify({'error': 'Failed to fetch jobs', 'jobs': []}), 500
 
 @app.route('/api/job/<job_id>', methods=['GET'])
 def get_job(job_id):
